@@ -1,16 +1,127 @@
 :root {
-  /* Color Palette - Natural & Modern */
-  --primary-color: #2d6a4f;   
-  --secondary-color: #40916c; 
-  --accent-color: #d8f3dc;    
-  --text-dark: #1b4332;       
-  --text-light: #ffffff;
-  --bg-white: #ffffff;
-  --bg-light: #f7f9f8;        
+  /* Color Palette - Blue & Professional */
+  --primary-color: #0056b3;  
+  --secondary-color: #3395ff; 
+  --accent-color: #e6f0ff;    
+  --text-dark: #002a5c;       
+  --text-light: #ffffff;      
+  --bg-white: #ffffff;        
+  --bg-light: #f0f8ff;        
+  
   --spacer-sm: 1rem;
   --spacer-md: 2rem;
   --spacer-lg: 4rem;
   --radius: 8px;
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   --font-main: system-ui, -apple-system, sans-serif;
+  
+  --correct-color: #28a745; 
+  --wrong-color: #dc3545; 
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header {
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    text-align: center;
+    padding: var(--spacer-sm);
+}
+
+main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacer-sm);
+    width: 100%;
+    height: 100%;
+}
+
+.screen {
+    width: 90%;
+    max-width: 600px;
+    height: 100%;
+    flex: 1;
+    align-items: center;
+    background-color: var(--bg-white);
+    padding: var(--spacer-md);
+    border-radius: var(--radius);
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--text-dark);
+    box-shadow: 0 0px 60px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.hidden {
+    display: none;
+}
+
+.btn {
+    background-color: var(--secondary-color);
+    color: var(--text-light);
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: var(--spacer-sm);
+}
+
+.btn:hover {
+    background-color: var(--primary-color);
+}
+
+#options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: var(--spacer-sm);
+}
+
+.option-btn {
+    background-color: var(--accent-color);
+    color: var(--text-dark);
+    padding: 10px;
+    border: 1px solid var(--secondary-color);
+    border-radius: var(--radius);
+    cursor: pointer;
+    text-align: left;
+}
+
+.option-btn:hover {
+    background-color: #b7e4c7;
+}
+
+.review-item {
+    text-align: left;
+    border-bottom: 1px solid #ccc;
+    padding: 10px 0;
+}
+.review-correct {
+    color: var(--correct-color);
+    font-weight: bold;
+}
+.review-wrong {
+    color: var(--wrong-color);
+    font-weight: bold;
+}
+
+.footer {
+    height: auto;
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    text-align: center;
+    padding: var(--spacer-sm);
+    margin-top: auto;
 }
