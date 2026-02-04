@@ -1,0 +1,16 @@
+:root {
+  /* Color Palette - Natural & Modern */
+  --primary-color: #2d6a4f;   
+  --secondary-color: #40916c; 
+  --accent-color: #d8f3dc;    
+  --text-dark: #1b4332;       
+  --text-light: #ffffff;
+  --bg-white: #ffffff;
+  --bg-light: #f7f9f8;        
+  --spacer-sm: 1rem;
+  --spacer-md: 2rem;
+  --spacer-lg: 4rem;
+  --radius: 8px;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --font-main: system-ui, -apple-system, sans-serif;
+}
