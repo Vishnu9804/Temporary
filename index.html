@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Application</title>
+    <link rel="stylesheet" href="./src/css/style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Quiz Application</h1>
+    </header>
+
+    <main id="quiz-container">
+        <section id="start-screen" class="screen active">
+            <h2>Welcome to the Quiz</h2>
+            <p>You have 60 seconds to answer 10 questions.</p>
+            <button class="btn">Start Quiz</button>
+        </section>
+
+        <section id="quiz-screen" class="screen hidden">
+            <div id="question-palette" class="palette-container"></div>
+            <div id="timer-display">Time: <span id="time">60</span>s</div>
+            <div id="question-container">
+                <h3 id="question-text">Loading...</h3>
+                <div id="options-container"></div>
+            </div>
+            <p id="feedback-msg" class="hidden"></p>
+            
+            <section id="navigation-buttons" class="navigation-buttons">
+                <button id="previous-btn" class="btn-prev hidden">Previous Question</button>
+                <button id="next-btn" class="btn hidden">Next Question</button>
+                <button id="exit-btn" class="btn-exit hidden">Submit Quiz</button>
+            </section>
+        </section>
+
+        <section id="result-screen" class="screen hidden">
+            <h2>Quiz Completed!</h2>
+            <p>Your Score: <span id="final-score">0</span> / 10</p>
+            <div id="review-container"></div>
+            <button class="btn">Try Again</button>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>JavaScript Quiz Application</p>
+    </footer>
+
+    <script type="module" src="./src/app.js"></script>
+</body>
+</html>
