@@ -6,12 +6,12 @@ import os
 
 # 1. Setup the Free Tier API
 # Make sure you get your free API key from Google AI Studio and put it in your .env file
-genai.configure(api_key=os.environ.get("AIzaSyD7O25mmE97TR6ouzrH6V5VIeUnureXaRY"))
+genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 
 # We use the 'flash' model because it is lightning fast and great for chatbots
 model = genai.GenerativeModel('gemini-2.5-flash')
 
-def generate_response(client_id: str, msg: str, customer_id: str):
+async def generate_response(client_id: str, msg: str, customer_id: str):
     
     # ==========================================
     # STAGE 1: INTENT CLASSIFICATION
