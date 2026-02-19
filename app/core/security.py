@@ -2,12 +2,12 @@ from fastapi import Depends, HTTPException, status
 from app.core.database import get_db
 
 # Notice: db is now just a standard Python Dictionary (dict)
-def verify_client(client_id: str, client_pass: str, req_service: str, db: dict = Depends(get_db)):
+def verify_client(client_id: str, client_pass: str, req_service: str, db: dict):
     # 1. Check if client_id acts as a key in the dictionary
     if client_id not in db:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Client ID not found in JSON"
+            detail="Client ID not found in JSON"+client_id
         )
     
     # 2. Get the client data
