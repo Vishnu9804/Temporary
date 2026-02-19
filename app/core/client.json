@@ -1,0 +1,9 @@
+{
+  "client_123": {
+    "password": "secret_password",
+    "name": "Urban Trends Fashion",
+    "services": ["chat", "pricing"],
+    "order_tracking_api": "http://127.0.0.1:8001/orders?customer_id=",
+    "customerInfo":"http://127.0.0.1:8001/customers/"
+  }
+}
