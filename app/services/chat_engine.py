@@ -3,10 +3,11 @@ from fastapi import requests
 import google.generativeai as genai
 import json
 import os
+from app.core.config import settings
 
 # 1. Setup the Free Tier API
 # Make sure you get your free API key from Google AI Studio and put it in your .env file
-genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
+genai.configure(api_key=settings.GOOGLE_API_KEY)
 
 # We use the 'flash' model because it is lightning fast and great for chatbots
 model = genai.GenerativeModel('gemini-2.5-flash')
