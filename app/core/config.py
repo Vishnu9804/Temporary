@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # Add this line to tell Pydantic to read this from your .env file
-    GOOGLE_API_KEY: str 
+    API_KEY: str 
 
     class Config:
         env_file = ".env"

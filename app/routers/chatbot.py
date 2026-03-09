@@ -24,4 +24,4 @@ async def ask_chatbot(request: ChatRequest, db: dict = Depends(get_db)):
     # We pass the client_id so the service knows WHICH client's data to look up
     bot_answer = await generate_response(request.client_id, request.customer_msg, request.customer_id)
     
-    return {"response": bot_answer}
+    return bot_answer
