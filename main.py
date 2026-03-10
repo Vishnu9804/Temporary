@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
-from app.routers import chatbot, returns # <--- Imported returns here
+from app.routers import chatbot, returnCSI  # Fixed: Importing the correct filename
 from app.core.security import verify_client
 from app.core.config import settings
 
@@ -17,15 +17,9 @@ app.include_router(
     tags=["Chat"]
 )
 
-# Include Return CSI Router <--- Added this block
+# Include Return CSI Router
 app.include_router(
-    returns.router,
-    prefix=f"{settings.API_V1_STR}/returns", # This becomes "/api/v1/returns/csi"
+    returnCSI.router,
+    prefix=f"{settings.API_V1_STR}/returns", 
     tags=["Returns CSI"]
 )
-
-# app.include_router(
-#     pricing.router, 
-#     prefix=f"{settings.API_V1_STR}/pricing", 
-#     tags=["Pricing"]
-# )
