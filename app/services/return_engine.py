@@ -29,25 +29,31 @@ async def return_engine(returns_api_url: str):
         return {"error": f"API Connection Error: {str(e)}"}
 
     # ==========================================
-    # STAGE 2: SANITIZE & GROUP
+    # STAGE 2: STRICT SANITIZATION & GROUPING
     # ==========================================
     product_comments = {} 
     
     for rma in raw_returns:
-        comment = rma.get("customer_comment", "")
+        # Default to None if the key doesn't even exist
+        comment = rma.get("customer_comment", None)
         reason = rma.get("return_reason", "Unknown")
         
-        # 1. Drop completely blank or null comments
-        if not comment or not str(comment).strip():
+        # 1. Drop explicitly null/None comments immediately
+        if comment is None:
             continue
         
+        # 2. Strip whitespaces and make lowercase for validation
         clean_comment = str(comment).strip().lower()
         
-        # 2. Drop gibberish and lazy single words
+        # 3. Drop completely empty strings (this catches "" and "   ")
+        if clean_comment == "":
+            continue
+        
+        # 4. Drop gibberish and lazy single words
         if clean_comment in USELESS_COMMENTS or len(clean_comment) < 3:
             continue
             
-        # 3. Group by product_id
+        # 5. Group by product_id (Only the high-signal survivors make it here)
         items = rma.get("items", [])
         for item in items:
             pid = item.get("product_id")
@@ -58,7 +64,8 @@ async def return_engine(returns_api_url: str):
             
             product_comments[pid].append({
                 "reason": reason,
-                "comment": comment 
+                # We pass the original cased comment to the LLM, but stripped of trailing/leading spaces
+                "comment": str(comment).strip()
             })
 
     # ==========================================
