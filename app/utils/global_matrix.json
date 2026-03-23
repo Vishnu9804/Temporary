@@ -1,0 +1,524 @@
+{
+  "metadata": {
+    "version": "1.1.0",
+    "last_updated": "2026-03-23",
+    "description": "Master e-commerce fallback matrix for event and seasonality forecasting. Evaluates multi-tag arrays."
+  },
+  "regions_supported": ["US", "CA", "UK", "EU", "IN", "AUS", "UAE", "SG"],
+  "verticals_supported": [
+    "Cosmetics",
+    "Apparel",
+    "Electronics",
+    "Home_Decor",
+    "Fitness"
+  ],
+
+  "events": {
+    "Black Friday & Cyber Monday Week": {
+      "dates": { "start": "11-20", "end": "11-30" },
+      "description": "Massive global discounting period. Focuses on high-ticket items and winter prep.",
+      "regional_multipliers": {
+        "US": {
+          "Electronics": 4.5,
+          "Winter_Apparel": 3.8,
+          "All_Season_Apparel": 2.5,
+          "Winter_Skincare": 3.0,
+          "Premium_Cosmetics": 3.5,
+          "All_Season_Cosmetics": 2.2,
+          "Summer_Skincare": 0.6,
+          "Home_Decor": 2.5,
+          "Fitness": 1.5,
+          "Sun_Protection": 0.4
+        },
+        "CA": {
+          "Electronics": 4.0,
+          "Winter_Apparel": 4.2,
+          "All_Season_Apparel": 2.0,
+          "Winter_Skincare": 3.2,
+          "Premium_Cosmetics": 3.0,
+          "All_Season_Cosmetics": 2.0,
+          "Summer_Skincare": 0.4,
+          "Home_Decor": 2.0,
+          "Fitness": 1.2,
+          "Sun_Protection": 0.3
+        },
+        "UK": {
+          "Electronics": 3.8,
+          "Winter_Apparel": 3.0,
+          "All_Season_Apparel": 2.0,
+          "Winter_Skincare": 2.8,
+          "Premium_Cosmetics": 2.8,
+          "All_Season_Cosmetics": 2.0,
+          "Summer_Skincare": 0.5,
+          "Home_Decor": 2.2,
+          "Fitness": 1.2,
+          "Sun_Protection": 0.4
+        },
+        "EU": {
+          "Electronics": 3.0,
+          "Winter_Apparel": 2.5,
+          "All_Season_Apparel": 1.8,
+          "Winter_Skincare": 2.0,
+          "Premium_Cosmetics": 2.0,
+          "All_Season_Cosmetics": 1.5,
+          "Summer_Skincare": 0.5,
+          "Home_Decor": 1.8,
+          "Fitness": 1.1,
+          "Sun_Protection": 0.5
+        },
+        "AUS": {
+          "Electronics": 2.5,
+          "Summer_Apparel": 3.5,
+          "All_Season_Apparel": 1.8,
+          "Summer_Skincare": 3.2,
+          "Premium_Cosmetics": 2.5,
+          "All_Season_Cosmetics": 1.8,
+          "Winter_Skincare": 0.3,
+          "Home_Decor": 1.5,
+          "Fitness": 1.5,
+          "Sun_Protection": 3.0
+        },
+        "IN": {
+          "Electronics": 1.5,
+          "Winter_Apparel": 1.2,
+          "All_Season_Apparel": 1.2,
+          "All_Season_Cosmetics": 1.2,
+          "Premium_Cosmetics": 1.5,
+          "Home_Decor": 1.1,
+          "Fitness": 1.0,
+          "Sun_Protection": 0.9
+        }
+      }
+    },
+    "Diwali Prep & Festival": {
+      "dates": { "start": "10-15", "end": "11-05" },
+      "description": "Major gifting, apparel, and home decor season in India and strong diaspora regions.",
+      "regional_multipliers": {
+        "IN": {
+          "Traditional_Apparel": 6.0,
+          "Festive_Decor": 5.5,
+          "All_Season_Apparel": 2.5,
+          "Home_Decor": 4.0,
+          "Electronics": 3.5,
+          "Premium_Cosmetics": 3.0,
+          "All_Season_Cosmetics": 2.5,
+          "Winter_Skincare": 1.5,
+          "Fitness": 0.6,
+          "Sun_Protection": 0.8
+        },
+        "CA": {
+          "Traditional_Apparel": 2.5,
+          "Festive_Decor": 2.0,
+          "Home_Decor": 1.5,
+          "Electronics": 1.1,
+          "Premium_Cosmetics": 1.5,
+          "All_Season_Cosmetics": 1.3,
+          "Winter_Skincare": 1.2,
+          "Sun_Protection": 0.5
+        },
+        "UK": {
+          "Traditional_Apparel": 2.2,
+          "Festive_Decor": 1.8,
+          "Home_Decor": 1.4,
+          "Electronics": 1.1,
+          "Premium_Cosmetics": 1.4,
+          "All_Season_Cosmetics": 1.2,
+          "Winter_Skincare": 1.1,
+          "Sun_Protection": 0.5
+        },
+        "UAE": {
+          "Traditional_Apparel": 3.0,
+          "Festive_Decor": 2.8,
+          "Home_Decor": 2.0,
+          "Electronics": 1.5,
+          "Premium_Cosmetics": 2.0,
+          "All_Season_Cosmetics": 1.8,
+          "Winter_Skincare": 1.1,
+          "Sun_Protection": 1.0
+        },
+        "SG": {
+          "Traditional_Apparel": 2.8,
+          "Festive_Decor": 2.5,
+          "Home_Decor": 1.8,
+          "Electronics": 1.3,
+          "Premium_Cosmetics": 1.8,
+          "All_Season_Cosmetics": 1.5,
+          "Winter_Skincare": 0.9,
+          "Sun_Protection": 1.1
+        },
+        "US": {
+          "Traditional_Apparel": 1.8,
+          "Festive_Decor": 1.5,
+          "Home_Decor": 1.2,
+          "Electronics": 1.0,
+          "Premium_Cosmetics": 1.2,
+          "All_Season_Cosmetics": 1.1,
+          "Winter_Skincare": 1.0,
+          "Sun_Protection": 0.6
+        }
+      }
+    },
+    "Christmas & Holiday Gifting": {
+      "dates": { "start": "12-05", "end": "12-24" },
+      "description": "Massive global gifting. High premium item movement. Heavy drop in self-improvement/fitness.",
+      "regional_multipliers": {
+        "US": {
+          "Toys": 6.0,
+          "Electronics": 3.0,
+          "Premium_Cosmetics": 3.5,
+          "Winter_Apparel": 2.5,
+          "All_Season_Cosmetics": 2.0,
+          "Festive_Decor": 1.5,
+          "Fitness": 0.3,
+          "Sun_Protection": 0.2
+        },
+        "CA": {
+          "Toys": 5.5,
+          "Electronics": 2.8,
+          "Premium_Cosmetics": 3.2,
+          "Winter_Apparel": 3.0,
+          "All_Season_Cosmetics": 2.0,
+          "Festive_Decor": 1.5,
+          "Fitness": 0.3,
+          "Sun_Protection": 0.1
+        },
+        "UK": {
+          "Toys": 5.5,
+          "Electronics": 2.5,
+          "Premium_Cosmetics": 3.0,
+          "Winter_Apparel": 2.2,
+          "All_Season_Cosmetics": 2.0,
+          "Festive_Decor": 1.5,
+          "Fitness": 0.3,
+          "Sun_Protection": 0.2
+        },
+        "AUS": {
+          "Toys": 5.0,
+          "Electronics": 2.0,
+          "Premium_Cosmetics": 2.5,
+          "Summer_Apparel": 2.5,
+          "Summer_Skincare": 2.5,
+          "All_Season_Cosmetics": 1.5,
+          "Fitness": 0.4,
+          "Sun_Protection": 3.0
+        },
+        "IN": {
+          "Toys": 1.5,
+          "Electronics": 1.2,
+          "Premium_Cosmetics": 1.5,
+          "Winter_Apparel": 1.3,
+          "All_Season_Cosmetics": 1.2,
+          "Festive_Decor": 1.2,
+          "Fitness": 0.8,
+          "Sun_Protection": 0.8
+        }
+      }
+    },
+    "New Year Resolution Boom": {
+      "dates": { "start": "12-26", "end": "01-15" },
+      "description": "Explosion in fitness, health, and acne/detox treatments. Drop in premium gifting.",
+      "regional_multipliers": {
+        "US": {
+          "Fitness": 4.5,
+          "Activewear": 3.5,
+          "Detox_Skincare": 2.5,
+          "Winter_Skincare": 1.8,
+          "Premium_Cosmetics": 0.6,
+          "Toys": 0.2,
+          "Home_Decor": 0.5
+        },
+        "CA": {
+          "Fitness": 4.0,
+          "Activewear": 3.2,
+          "Detox_Skincare": 2.5,
+          "Winter_Skincare": 2.0,
+          "Premium_Cosmetics": 0.6,
+          "Toys": 0.2,
+          "Home_Decor": 0.5
+        },
+        "UK": {
+          "Fitness": 3.8,
+          "Activewear": 3.0,
+          "Detox_Skincare": 2.2,
+          "Winter_Skincare": 1.8,
+          "Premium_Cosmetics": 0.6,
+          "Toys": 0.2,
+          "Home_Decor": 0.5
+        },
+        "AUS": {
+          "Fitness": 3.5,
+          "Activewear": 2.8,
+          "Detox_Skincare": 2.0,
+          "Summer_Skincare": 1.5,
+          "Premium_Cosmetics": 0.7,
+          "Toys": 0.3,
+          "Home_Decor": 0.5
+        },
+        "IN": {
+          "Fitness": 2.5,
+          "Activewear": 2.0,
+          "Detox_Skincare": 1.8,
+          "Winter_Skincare": 1.5,
+          "Premium_Cosmetics": 0.8,
+          "Toys": 0.5,
+          "Home_Decor": 0.8
+        }
+      }
+    },
+    "Summer Prep & Prime Day (Mid-Year)": {
+      "dates": { "start": "07-10", "end": "07-20" },
+      "description": "Mid-year discount events and high summer peak in Northern Hemisphere.",
+      "regional_multipliers": {
+        "US": {
+          "Electronics": 2.5,
+          "Summer_Apparel": 3.0,
+          "Summer_Skincare": 3.5,
+          "Sun_Protection": 4.0,
+          "Winter_Apparel": 0.1,
+          "Winter_Skincare": 0.2
+        },
+        "CA": {
+          "Electronics": 2.5,
+          "Summer_Apparel": 3.0,
+          "Summer_Skincare": 3.5,
+          "Sun_Protection": 3.8,
+          "Winter_Apparel": 0.1,
+          "Winter_Skincare": 0.2
+        },
+        "UK": {
+          "Electronics": 2.2,
+          "Summer_Apparel": 2.5,
+          "Summer_Skincare": 2.8,
+          "Sun_Protection": 3.0,
+          "Winter_Apparel": 0.2,
+          "Winter_Skincare": 0.3
+        },
+        "IN": {
+          "Electronics": 1.8,
+          "Summer_Apparel": 1.5,
+          "Summer_Skincare": 1.5,
+          "Sun_Protection": 1.8,
+          "Winter_Apparel": 0.2,
+          "Winter_Skincare": 0.4
+        },
+        "AUS": {
+          "Electronics": 1.5,
+          "Winter_Apparel": 2.5,
+          "Winter_Skincare": 2.0,
+          "Sun_Protection": 0.5,
+          "Summer_Apparel": 0.3,
+          "Summer_Skincare": 0.4
+        }
+      }
+    }
+  },
+
+  "seasonality": {
+    "Northern_Hemisphere": {
+      "regions": ["US", "CA", "UK", "EU", "IN", "UAE"],
+      "monthly_curves": {
+        "Winter_Skincare": {
+          "Jan": 2.2,
+          "Feb": 1.8,
+          "Mar": 1.2,
+          "Apr": 0.7,
+          "May": 0.3,
+          "Jun": 0.1,
+          "Jul": 0.1,
+          "Aug": 0.2,
+          "Sep": 0.8,
+          "Oct": 1.5,
+          "Nov": 2.2,
+          "Dec": 2.5
+        },
+        "Summer_Skincare": {
+          "Jan": 0.1,
+          "Feb": 0.2,
+          "Mar": 0.8,
+          "Apr": 1.5,
+          "May": 2.2,
+          "Jun": 3.0,
+          "Jul": 3.5,
+          "Aug": 2.8,
+          "Sep": 1.2,
+          "Oct": 0.5,
+          "Nov": 0.2,
+          "Dec": 0.1
+        },
+        "Sun_Protection": {
+          "Jan": 0.1,
+          "Feb": 0.2,
+          "Mar": 1.0,
+          "Apr": 2.0,
+          "May": 3.5,
+          "Jun": 4.5,
+          "Jul": 5.0,
+          "Aug": 3.5,
+          "Sep": 1.5,
+          "Oct": 0.6,
+          "Nov": 0.2,
+          "Dec": 0.1
+        },
+        "Winter_Apparel": {
+          "Jan": 2.5,
+          "Feb": 1.5,
+          "Mar": 0.8,
+          "Apr": 0.3,
+          "May": 0.1,
+          "Jun": 0.05,
+          "Jul": 0.05,
+          "Aug": 0.2,
+          "Sep": 1.2,
+          "Oct": 2.0,
+          "Nov": 2.8,
+          "Dec": 3.0
+        },
+        "Summer_Apparel": {
+          "Jan": 0.1,
+          "Feb": 0.2,
+          "Mar": 1.0,
+          "Apr": 1.8,
+          "May": 2.8,
+          "Jun": 3.2,
+          "Jul": 3.5,
+          "Aug": 2.2,
+          "Sep": 1.0,
+          "Oct": 0.3,
+          "Nov": 0.1,
+          "Dec": 0.1
+        },
+        "Detox_Skincare": {
+          "Jan": 1.8,
+          "Feb": 1.2,
+          "Mar": 1.0,
+          "Apr": 1.0,
+          "May": 1.0,
+          "Jun": 1.0,
+          "Jul": 1.0,
+          "Aug": 1.0,
+          "Sep": 1.2,
+          "Oct": 1.0,
+          "Nov": 0.8,
+          "Dec": 0.6
+        },
+        "All_Season_Cosmetics": {
+          "Jan": 0.9,
+          "Feb": 1.0,
+          "Mar": 1.0,
+          "Apr": 1.0,
+          "May": 1.0,
+          "Jun": 1.0,
+          "Jul": 1.0,
+          "Aug": 1.0,
+          "Sep": 1.0,
+          "Oct": 1.0,
+          "Nov": 1.1,
+          "Dec": 1.2
+        }
+      }
+    },
+    "Southern_Hemisphere": {
+      "regions": ["AUS", "SA", "BR"],
+      "monthly_curves": {
+        "Winter_Skincare": {
+          "Jan": 0.1,
+          "Feb": 0.2,
+          "Mar": 0.5,
+          "Apr": 1.0,
+          "May": 1.8,
+          "Jun": 2.5,
+          "Jul": 2.8,
+          "Aug": 2.0,
+          "Sep": 1.2,
+          "Oct": 0.5,
+          "Nov": 0.2,
+          "Dec": 0.1
+        },
+        "Summer_Skincare": {
+          "Jan": 3.5,
+          "Feb": 2.8,
+          "Mar": 1.5,
+          "Apr": 0.8,
+          "May": 0.3,
+          "Jun": 0.1,
+          "Jul": 0.1,
+          "Aug": 0.3,
+          "Sep": 1.0,
+          "Oct": 1.8,
+          "Nov": 2.8,
+          "Dec": 3.5
+        },
+        "Sun_Protection": {
+          "Jan": 5.0,
+          "Feb": 3.5,
+          "Mar": 1.5,
+          "Apr": 0.6,
+          "May": 0.2,
+          "Jun": 0.1,
+          "Jul": 0.1,
+          "Aug": 0.2,
+          "Sep": 1.0,
+          "Oct": 2.0,
+          "Nov": 3.5,
+          "Dec": 4.5
+        },
+        "Winter_Apparel": {
+          "Jan": 0.05,
+          "Feb": 0.1,
+          "Mar": 0.5,
+          "Apr": 1.2,
+          "May": 2.2,
+          "Jun": 3.0,
+          "Jul": 3.2,
+          "Aug": 2.5,
+          "Sep": 1.2,
+          "Oct": 0.5,
+          "Nov": 0.1,
+          "Dec": 0.05
+        },
+        "Summer_Apparel": {
+          "Jan": 3.5,
+          "Feb": 2.5,
+          "Mar": 1.5,
+          "Apr": 0.8,
+          "May": 0.2,
+          "Jun": 0.1,
+          "Jul": 0.1,
+          "Aug": 0.3,
+          "Sep": 1.0,
+          "Oct": 1.8,
+          "Nov": 2.8,
+          "Dec": 3.5
+        },
+        "Detox_Skincare": {
+          "Jan": 1.8,
+          "Feb": 1.2,
+          "Mar": 1.0,
+          "Apr": 1.0,
+          "May": 1.0,
+          "Jun": 1.0,
+          "Jul": 1.0,
+          "Aug": 1.0,
+          "Sep": 1.2,
+          "Oct": 1.0,
+          "Nov": 0.8,
+          "Dec": 0.6
+        },
+        "All_Season_Cosmetics": {
+          "Jan": 1.0,
+          "Feb": 1.0,
+          "Mar": 1.0,
+          "Apr": 1.0,
+          "May": 1.0,
+          "Jun": 1.0,
+          "Jul": 1.0,
+          "Aug": 1.0,
+          "Sep": 1.0,
+          "Oct": 1.0,
+          "Nov": 1.0,
+          "Dec": 1.0
+        }
+      }
+    }
+  }
+}
