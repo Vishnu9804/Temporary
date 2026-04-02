@@ -2,12 +2,13 @@
   "client_123": {
     "password": "secret_password",
     "name": "Urban Trends Fashion",
-    "services": ["chat", "pricing", "returns", "inventory", "association"],
+    "services": ["chat", "pricing", "returns", "inventory", "association", "whalehunter"],
     "order_tracking_api": "http://127.0.0.1:8001/orders?customer_id=",
     "customerInfo": "http://127.0.0.1:8001/customers/",
     "returns_api": "http://127.0.0.1:8001/returns",
     "orders_api": "http://127.0.0.1:8001/orders",
     "products_api": "http://127.0.0.1:8001/products",
-    "restocks_api": "http://127.0.0.1:8001/restocks"
+    "restocks_api": "http://127.0.0.1:8001/restocks",
+    "customers": "http://127.0.0.1:8001/customers"
   }
 }

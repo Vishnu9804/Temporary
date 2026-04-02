@@ -1,3 +1,5 @@
+import httpx
+import asyncio
 from datetime import datetime
 from typing import Dict, Any, List
 import math
@@ -8,36 +10,62 @@ def z_score(val: float, mean: float, std: float) -> float:
         return 0.0
     return (val - mean) / std
 
-def analyze_tenant_data(payload: Dict[str, Any]) -> Dict[str, Any]:
-    tenant_id = payload['tenant_id']
-    analysis_date = payload['analysis_date']
-    customers = payload['customers']
-    orders = payload['orders']
+async def whale_hunter_engine(client_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+    # --- Step 0: Fetch Data via Adapters ---
+    async with httpx.AsyncClient() as client:
+        # Fetch concurrently for speed
+        cust_task = client.get(client_data["customers"])
+        orders_task = client.get(client_data["orders_api"])
+        
+        cust_resp, orders_resp = await asyncio.gather(cust_task, orders_task)
+        
+        if cust_resp.status_code != 200 or orders_resp.status_code != 200:
+            raise Exception("Failed to fetch data from client adapters.")
+            
+        cust_json = cust_resp.json()
+        orders_json = orders_resp.json()
+
+    # Safely extract arrays (Adapters might return {"customers": []} or just [])
+    customers = cust_json.get("customers", []) if isinstance(cust_json, dict) else cust_json
+    orders = orders_json.get("orders", []) if isinstance(orders_json, dict) else orders_json
     
     # Step 1: Data Validation & Multi-Tenancy Check
     if not customers or not orders:
-        raise ValueError("Customers or orders arrays cannot be empty.")
+        raise ValueError("Customers or orders arrays retrieved from adapters are empty.")
         
-    # Standardize datetimes for safe comparison
-    if analysis_date.tzinfo is not None:
-        analysis_date = analysis_date.replace(tzinfo=None)
+    analysis_date = datetime.now()
             
-    # Group orders by customer strictly from the provided payload
+    # Step 1.5: Parse Dates and Map Data safely
     cust_profiles = {}
     for c in customers:
-        dt = c['account_created_at']
-        if dt.tzinfo is not None:
-            dt = dt.replace(tzinfo=None)
-        cust_profiles[c['customer_id']] = {'account_created_at': dt, 'orders': []}
+        c_id = c.get('id') or c.get('customer_id')
+        if not c_id: continue
+        
+        dt_str = c.get('account_created_at')
+        # If no creation date, assume very old (datetime.min) so they don't get flagged as newbie
+        if dt_str:
+            # Handle standard ISO formats gracefully
+            dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00")).replace(tzinfo=None)
+        else:
+            dt = datetime.min
+            
+        cust_profiles[c_id] = {'account_created_at': dt, 'orders': []}
         
     for o in orders:
-        c_id = o['customer_id']
+        c_id = o.get('customer_id')
         if c_id in cust_profiles:
-            dt = o['created_at']
-            if dt.tzinfo is not None:
-                dt = dt.replace(tzinfo=None)
-            o['created_at'] = dt
-            cust_profiles[c_id]['orders'].append(o)
+            dt_str = o.get('created_at')
+            if not dt_str: continue
+            
+            dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00")).replace(tzinfo=None)
+            total = float(o.get('total_amount', o.get('subtotal', 0.0)))
+            discount = float(o.get('discount_applied', 0.0))
+            
+            cust_profiles[c_id]['orders'].append({
+                'created_at': dt,
+                'total_amount': total,
+                'discount_applied': discount
+            })
             
     # Step 2: Dead Pool Filtering (The 18-Month Rule)
     dead_pool_ignored = 0
@@ -94,7 +122,6 @@ def analyze_tenant_data(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     # Step 5A: The Heuristic Engine (New Clients)
     if engine_used == "Heuristic_Percentile":
-        # Calculate 15% Monetary threshold for Early Whales
         monetary_values = sorted([v['M'] for v in rfmd_data.values()], reverse=True)
         top_15_index = max(0, int(len(monetary_values) * 0.15) - 1)
         top_15_threshold = monetary_values[top_15_index] if monetary_values else 0
@@ -103,7 +130,7 @@ def analyze_tenant_data(payload: Dict[str, Any]) -> Dict[str, Any]:
             if feats['Age'] < 45 and feats['F'] == 1:
                 newbies.append(c_id)
             elif feats['M'] >= top_15_threshold and feats['F'] >= 2 and feats['D'] < 0.20:
-                true_whales.append(c_id)  # Early whales grouped under true_whales schema output
+                true_whales.append(c_id)
             elif feats['F'] >= 2 and feats['D'] >= 0.30:
                 deal_chasers.append(c_id)
             else:
@@ -125,13 +152,11 @@ def analyze_tenant_data(payload: Dict[str, Any]) -> Dict[str, Any]:
         d_mean, d_std = calc_mean_std([d['D'] for d in rfmd_data.values()])
         
         for c_id, feats in rfmd_data.items():
-            # Standard scaling equivalent mapping features over average bounds
             r_z = z_score(feats['R'], r_mean, r_std)
             f_z = z_score(feats['F'], f_mean, f_std)
             m_z = z_score(feats['M'], m_mean, m_std)
             d_z = z_score(feats['D'], d_mean, d_std)
             
-            # Simulated multi-dimensional clustering allocation
             if feats['Age'] < 60 and feats['F'] == 1:
                 newbies.append(c_id)
             elif f_z > 0 and m_z > 0 and r_z < 0 and d_z < 0:

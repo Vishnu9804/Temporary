@@ -1,27 +1,15 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from typing import List
-from datetime import datetime
-from app.services.whale_hunter_engine import analyze_tenant_data
+from app.core.security import verify_client
+from app.core.database import get_db
+from app.services.whale_hunter_engine import whale_hunter_engine
 
 router = APIRouter()
 
-class Customer(BaseModel):
-    customer_id: str
-    account_created_at: datetime
-
-class Order(BaseModel):
-    order_id: str
-    customer_id: str
-    created_at: datetime
-    total_amount: float
-    discount_applied: float
-
 class WhaleHunterRequest(BaseModel):
-    tenant_id: str
-    analysis_date: datetime = Field(default_factory=datetime.now)
-    customers: List[Customer]
-    orders: List[Order]
+    client_id: str
+    client_pass: str
 
 class ProcessingMeta(BaseModel):
     engine_used: str
@@ -43,12 +31,18 @@ class WhaleHunterResponse(BaseModel):
     segments: Segments
 
 @router.post("/analyze", response_model=WhaleHunterResponse)
-def analyze_data(payload: WhaleHunterRequest):
-    if not payload.customers or not payload.orders:
-        raise HTTPException(status_code=400, detail="Customers and orders arrays cannot be empty.")
+async def analyze_data(request: WhaleHunterRequest, db: dict = Depends(get_db)):
+    # 1. Security & Service Check
+    client_data = verify_client(request.client_id, request.client_pass, "whalehunter", db)
     
+    # 2. Ensure Client Adapter URLs exist
+    if not all(k in client_data for k in ("customers", "orders_api")):
+        raise HTTPException(status_code=400, detail="Client missing required adapter URLs.")
+
+    # 3. Trigger Engine
     try:
-        result = analyze_tenant_data(payload.dict())
-        return result
+        # Pass the client's configuration and their ID to the engine
+        report = await whale_hunter_engine(client_data, request.client_id)
+        return report
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
