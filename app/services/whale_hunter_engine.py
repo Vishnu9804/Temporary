@@ -1,0 +1,169 @@
+from datetime import datetime
+from typing import Dict, Any, List
+import math
+
+def z_score(val: float, mean: float, std: float) -> float:
+    """Helper to calculate standard score simulating KMeans standard scaling."""
+    if std == 0:
+        return 0.0
+    return (val - mean) / std
+
+def analyze_tenant_data(payload: Dict[str, Any]) -> Dict[str, Any]:
+    tenant_id = payload['tenant_id']
+    analysis_date = payload['analysis_date']
+    customers = payload['customers']
+    orders = payload['orders']
+    
+    # Step 1: Data Validation & Multi-Tenancy Check
+    if not customers or not orders:
+        raise ValueError("Customers or orders arrays cannot be empty.")
+        
+    # Standardize datetimes for safe comparison
+    if analysis_date.tzinfo is not None:
+        analysis_date = analysis_date.replace(tzinfo=None)
+            
+    # Group orders by customer strictly from the provided payload
+    cust_profiles = {}
+    for c in customers:
+        dt = c['account_created_at']
+        if dt.tzinfo is not None:
+            dt = dt.replace(tzinfo=None)
+        cust_profiles[c['customer_id']] = {'account_created_at': dt, 'orders': []}
+        
+    for o in orders:
+        c_id = o['customer_id']
+        if c_id in cust_profiles:
+            dt = o['created_at']
+            if dt.tzinfo is not None:
+                dt = dt.replace(tzinfo=None)
+            o['created_at'] = dt
+            cust_profiles[c_id]['orders'].append(o)
+            
+    # Step 2: Dead Pool Filtering (The 18-Month Rule)
+    dead_pool_ignored = 0
+    active_customers = {}
+    
+    for c_id, data in cust_profiles.items():
+        c_orders = data['orders']
+        if not c_orders:
+            dead_pool_ignored += 1
+            continue
+            
+        latest_order_date = max(o['created_at'] for o in c_orders)
+        days_since_last_order = (analysis_date - latest_order_date).days
+        
+        # Flag as Archived/Dead if older than 540 days
+        if days_since_last_order > 540:
+            dead_pool_ignored += 1
+        else:
+            active_customers[c_id] = data
+            active_customers[c_id]['latest_order_date'] = latest_order_date
+            
+    if not active_customers:
+        return _build_response(tenant_id, "None", len(customers), dead_pool_ignored, 0, 0, [], [], [], [], [])
+        
+    # Step 3: Data Depth Calculation (Routing the Engine)
+    all_active_orders = [o for data in active_customers.values() for o in data['orders']]
+    earliest_order_date = min(o['created_at'] for o in all_active_orders)
+    latest_active_order_date = max(o['created_at'] for o in all_active_orders)
+    
+    data_depth_days = (latest_active_order_date - earliest_order_date).days
+    engine_used = "Predictive_Clustering" if data_depth_days >= 180 else "Heuristic_Percentile"
+    
+    # Step 4: RFMD Feature Engineering
+    rfmd_data = {}
+    for c_id, data in active_customers.items():
+        c_orders = data['orders']
+        
+        recency = (analysis_date - data['latest_order_date']).days
+        frequency = len(c_orders)
+        monetary = sum(o['total_amount'] for o in c_orders)
+        
+        sum_total = sum(o['total_amount'] for o in c_orders)
+        sum_discount = sum(o['discount_applied'] for o in c_orders)
+        discount_affinity = sum_discount / (sum_total + sum_discount) if (sum_total + sum_discount) > 0 else 0.0
+        
+        account_age = (analysis_date - data['account_created_at']).days
+        
+        rfmd_data[c_id] = {
+            'R': recency, 'F': frequency, 'M': monetary, 'D': discount_affinity, 'Age': account_age
+        }
+        
+    # Segment Arrays
+    true_whales, at_risk_whales, deal_chasers, regulars, newbies = [], [], [], [], []
+
+    # Step 5A: The Heuristic Engine (New Clients)
+    if engine_used == "Heuristic_Percentile":
+        # Calculate 15% Monetary threshold for Early Whales
+        monetary_values = sorted([v['M'] for v in rfmd_data.values()], reverse=True)
+        top_15_index = max(0, int(len(monetary_values) * 0.15) - 1)
+        top_15_threshold = monetary_values[top_15_index] if monetary_values else 0
+        
+        for c_id, feats in rfmd_data.items():
+            if feats['Age'] < 45 and feats['F'] == 1:
+                newbies.append(c_id)
+            elif feats['M'] >= top_15_threshold and feats['F'] >= 2 and feats['D'] < 0.20:
+                true_whales.append(c_id)  # Early whales grouped under true_whales schema output
+            elif feats['F'] >= 2 and feats['D'] >= 0.30:
+                deal_chasers.append(c_id)
+            else:
+                regulars.append(c_id)
+                
+    # Step 5B: The Predictive Engine (Mature Clients)
+    else:
+        def calc_mean_std(vals):
+            n = len(vals)
+            if n == 0: return 0, 0
+            mean = sum(vals) / n
+            if n < 2: return mean, 0
+            variance = sum((x - mean)**2 for x in vals) / (n - 1)
+            return mean, math.sqrt(variance)
+            
+        r_mean, r_std = calc_mean_std([d['R'] for d in rfmd_data.values()])
+        f_mean, f_std = calc_mean_std([d['F'] for d in rfmd_data.values()])
+        m_mean, m_std = calc_mean_std([d['M'] for d in rfmd_data.values()])
+        d_mean, d_std = calc_mean_std([d['D'] for d in rfmd_data.values()])
+        
+        for c_id, feats in rfmd_data.items():
+            # Standard scaling equivalent mapping features over average bounds
+            r_z = z_score(feats['R'], r_mean, r_std)
+            f_z = z_score(feats['F'], f_mean, f_std)
+            m_z = z_score(feats['M'], m_mean, m_std)
+            d_z = z_score(feats['D'], d_mean, d_std)
+            
+            # Simulated multi-dimensional clustering allocation
+            if feats['Age'] < 60 and feats['F'] == 1:
+                newbies.append(c_id)
+            elif f_z > 0 and m_z > 0 and r_z < 0 and d_z < 0:
+                true_whales.append(c_id)
+            elif f_z > 0 and m_z > 0 and r_z >= 0 and d_z < 0:
+                at_risk_whales.append(c_id)
+            elif f_z > 0 and d_z > 0:
+                deal_chasers.append(c_id)
+            else:
+                regulars.append(c_id)
+
+    # Step 6: Formatting and Return
+    return _build_response(
+        tenant_id, engine_used, len(customers), dead_pool_ignored, len(active_customers),
+        data_depth_days, true_whales, at_risk_whales, deal_chasers, regulars, newbies
+    )
+
+def _build_response(tenant_id, engine_used, total_rec, dead_ignored, active_proc, depth, tw, arw, dc, reg, nb):
+    return {
+        "tenant_id": tenant_id,
+        "processing_meta": {
+            "engine_used": engine_used,
+            "total_customers_received": total_rec,
+            "dead_pool_ignored": dead_ignored,
+            "active_customers_processed": active_proc,
+            "data_depth_days": depth
+        },
+        "segments": {
+            "true_whales": tw,
+            "at_risk_whales": arw,
+            "deal_chasers": dc,
+            "regulars": reg,
+            "newbies": nb
+        }
+    }

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import chatbot, returnCSI, inventoryadvisor, associationbucketmaker # <--- ADDED IMPORT
+from app.routers import chatbot, returnCSI, inventoryadvisor, associationbucketmaker, whalehunter # <--- ADDED IMPORT
 from app.core.config import settings
 
 app = FastAPI(title="My E-com B2B Startup")
@@ -14,3 +14,5 @@ app.include_router(inventoryadvisor.router, prefix=f"{settings.API_V1_STR}/inven
 
 # ---> NEW SERVICE ADDED HERE
 app.include_router(associationbucketmaker.router, prefix=f"{settings.API_V1_STR}/association", tags=["Association Bucket Maker"])
+
+app.include_router(whalehunter.router, prefix=f"{settings.API_V1_STR}/whale-hunter", tags=["Whale Hunter"])
