@@ -3,6 +3,8 @@ import asyncio
 from datetime import datetime
 from typing import Dict, Any, List
 import math
+from sqlalchemy.orm import Session
+from app.models.schemas import Customer, Order
 
 def z_score(val: float, mean: float, std: float) -> float:
     """Helper to calculate standard score simulating KMeans standard scaling."""
@@ -10,24 +12,17 @@ def z_score(val: float, mean: float, std: float) -> float:
         return 0.0
     return (val - mean) / std
 
-async def whale_hunter_engine(client_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
-    # --- Step 0: Fetch Data via Adapters ---
-    async with httpx.AsyncClient() as client:
-        # Fetch concurrently for speed
-        cust_task = client.get(client_data["customers"])
-        orders_task = client.get(client_data["orders_api"])
-        
-        cust_resp, orders_resp = await asyncio.gather(cust_task, orders_task)
-        
-        if cust_resp.status_code != 200 or orders_resp.status_code != 200:
-            raise Exception("Failed to fetch data from client adapters.")
-            
-        cust_json = cust_resp.json()
-        orders_json = orders_resp.json()
-
-    # Safely extract arrays (Adapters might return {"customers": []} or just [])
-    customers = cust_json.get("customers", []) if isinstance(cust_json, dict) else cust_json
-    orders = orders_json.get("orders", []) if isinstance(orders_json, dict) else orders_json
+async def whale_hunter_engine(client_id: str, db: Session):
+    # Fetch directly from DB
+    customers_db = db.query(Customer).filter(Customer.client_id == client_id).all()
+    orders_db = db.query(Order).filter(Order.client_id == client_id).all()
+    
+    if not customers_db or not orders_db:
+        raise ValueError("Customers or orders retrieved are empty.")
+    
+    # Map back to your logic format
+    customers = [{"id": c.id, "account_created_at": c.account_created_at.isoformat()} for c in customers_db]
+    orders = [{"customer_id": o.customer_id, "created_at": o.created_at.isoformat(), "total_amount": float(o.total_amount), "discount_applied": float(o.discount_applied or 0.0)} for o in orders_db]
     
     # Step 1: Data Validation & Multi-Tenancy Check
     if not customers or not orders:
@@ -88,7 +83,7 @@ async def whale_hunter_engine(client_data: Dict[str, Any], tenant_id: str) -> Di
             active_customers[c_id]['latest_order_date'] = latest_order_date
             
     if not active_customers:
-        return _build_response(tenant_id, "None", len(customers), dead_pool_ignored, 0, 0, [], [], [], [], [])
+        return _build_response(client_id, "None", len(customers), dead_pool_ignored, 0, 0, [], [], [], [], [])
         
     # Step 3: Data Depth Calculation (Routing the Engine)
     all_active_orders = [o for data in active_customers.values() for o in data['orders']]
@@ -170,13 +165,13 @@ async def whale_hunter_engine(client_data: Dict[str, Any], tenant_id: str) -> Di
 
     # Step 6: Formatting and Return
     return _build_response(
-        tenant_id, engine_used, len(customers), dead_pool_ignored, len(active_customers),
+        client_id, engine_used, len(customers), dead_pool_ignored, len(active_customers),
         data_depth_days, true_whales, at_risk_whales, deal_chasers, regulars, newbies
     )
 
-def _build_response(tenant_id, engine_used, total_rec, dead_ignored, active_proc, depth, tw, arw, dc, reg, nb):
+def _build_response(client_id, engine_used, total_rec, dead_ignored, active_proc, depth, tw, arw, dc, reg, nb):
     return {
-        "tenant_id": tenant_id,
+        "tenant_id": client_id,
         "processing_meta": {
             "engine_used": engine_used,
             "total_customers_received": total_rec,

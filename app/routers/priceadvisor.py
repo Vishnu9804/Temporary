@@ -4,6 +4,7 @@ from typing import List
 from app.core.security import verify_client
 from app.core.database import get_db
 from app.services.price_advisor_engine import price_advisor_engine
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -37,18 +38,7 @@ class PriceAdvisorResponse(BaseModel):
     advised_changes: List[AdvisedChange]
 
 @router.post("/analyze", response_model=PriceAdvisorResponse)
-async def analyze_pricing(request: PriceAdvisorRequest, db: dict = Depends(get_db)):
-    # 1. Security & Service Check
-    client_data = verify_client(request.client_id, request.client_pass, "priceadvisor", db)
-    
-    # 2. Ensure Client Adapter URLs exist (checking for either 'products' or 'products_api')
-    adapter_url = client_data.get("products_api") or client_data.get("products")
-    if not adapter_url:
-        raise HTTPException(status_code=400, detail="Client missing required adapter URL for products.")
-
-    # 3. Trigger Engine
-    try:
-        report = await price_advisor_engine(adapter_url, request.client_id)
-        return report
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def analyze_pricing(request: PriceAdvisorRequest, db: Session = Depends(get_db)):
+    verify_client(request.client_id, request.client_pass, "priceadvisor", db)
+    report = await price_advisor_engine(request.client_id, db)
+    return report

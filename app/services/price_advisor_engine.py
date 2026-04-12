@@ -1,31 +1,26 @@
 import httpx
 from typing import Dict, Any
+from sqlalchemy.orm import Session
+from app.models.schemas import Product
 
-async def price_advisor_engine(adapter_url: str, tenant_id: str) -> Dict[str, Any]:
-    # --- Step 1: Fetch Data via Adapter ---
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(adapter_url)
-        if resp.status_code != 200:
-            raise Exception("Failed to fetch data from client product adapter.")
-        
-        data_json = resp.json()
-        
-    products = data_json.get("products", []) if isinstance(data_json, dict) else data_json
-    if not products:
-        raise ValueError("Products array retrieved from adapter is empty.")
+async def price_advisor_engine(client_id: str, db: Session):
+    # Fetch Data Direct from DB
+    products_db = db.query(Product).filter(Product.client_id == client_id).all()
+    
+    if not products_db:
+        raise ValueError("No products found for this tenant.")
 
     advised_changes = []
 
-    # --- Step 2: Analyze Business Logic (Competitors + Inventory Matrix) ---
-    for p in products:
-        p_id = p.get("id")
-        p_name = p.get("name")
-        current_price = float(p.get("price", 0.0))
-        cost_price = float(p.get("cost_price", 0.0))  
-        min_price = float(p.get("min_allowable_price", 0.0))
-        stock = int(p.get("stock", 0))
-        tags = p.get("core_matrix_tags", [])
-        competitors = p.get("competitor_pricing_data", [])
+    for p in products_db:
+        p_id = p.id
+        p_name = p.name
+        current_price = float(p.price)
+        cost_price = float(p.cost_price)
+        min_price = float(p.min_allowable_price or 0.0)
+        stock = p.stock
+        tags = p.core_matrix_tags or []
+        competitors = p.competitor_pricing_data or []
 
         # 1. Buffer & Classification
         is_premium = "Premium_Cosmetics" in tags
@@ -208,9 +203,9 @@ async def price_advisor_engine(adapter_url: str, tenant_id: str) -> Dict[str, An
 
     # --- Step 3: Return Final Object ---
     return {
-        "tenant_id": tenant_id,
+        "tenant_id": client_id,
         "meta": {
-            "total_products_scanned": len(products),
+            "total_products_scanned": len(products_db),
             "products_requiring_action": len(advised_changes)
         },
         "advised_changes": advised_changes

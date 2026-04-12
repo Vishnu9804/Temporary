@@ -4,6 +4,7 @@ from typing import List
 from app.core.security import verify_client
 from app.core.database import get_db
 from app.services.whale_hunter_engine import whale_hunter_engine
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -31,18 +32,7 @@ class WhaleHunterResponse(BaseModel):
     segments: Segments
 
 @router.post("/analyze", response_model=WhaleHunterResponse)
-async def analyze_data(request: WhaleHunterRequest, db: dict = Depends(get_db)):
-    # 1. Security & Service Check
-    client_data = verify_client(request.client_id, request.client_pass, "whalehunter", db)
-    
-    # 2. Ensure Client Adapter URLs exist
-    if not all(k in client_data for k in ("customers", "orders_api")):
-        raise HTTPException(status_code=400, detail="Client missing required adapter URLs.")
-
-    # 3. Trigger Engine
-    try:
-        # Pass the client's configuration and their ID to the engine
-        report = await whale_hunter_engine(client_data, request.client_id)
-        return report
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def analyze_data(request: WhaleHunterRequest, db: Session = Depends(get_db)):
+    verify_client(request.client_id, request.client_pass, "whalehunter", db)
+    report = await whale_hunter_engine(request.client_id, db)
+    return report

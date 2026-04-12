@@ -1,11 +1,12 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    JSON_DB_PATH: str = "app/core/clients.json"
     API_V1_STR: str = "/api/v1"
-    
-    # Add this line to tell Pydantic to read this from your .env file
     API_KEY: str 
+    
+    # NEW: Supabase / PostgreSQL Connection String
+    # Format: postgresql://user:password@host:port/dbname
+    DATABASE_URL: str 
 
     class Config:
         env_file = ".env"

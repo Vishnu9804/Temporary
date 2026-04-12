@@ -1,24 +1,22 @@
-import requests
+from sqlalchemy.orm import Session
+from app.models.schemas import Order, Product
 from collections import defaultdict
 
-async def association_engine(client_data: dict):
-    # 1. FETCH DATA
-    try:
-        orders = requests.get(client_data["orders_api"]).json()
-        products_list = requests.get(client_data["products_api"]).json()
-    except Exception as e:
-        return {"error": f"Failed to fetch data from client APIs: {str(e)}"}
-        
-    # Create a quick dictionary to lookup product prices and names later
-    products = {p["id"]: p for p in products_list}
+async def association_engine(client_id: str, db: Session):
+    # 1. FETCH DATA DIRECTLY FROM POSTGRES
+    orders = db.query(Order).filter(Order.client_id == client_id).all()
+    products_list = db.query(Product).filter(Product.client_id == client_id).all()
+    
+    # Create dictionary to lookup product prices and names
+    products = {p.id: p for p in products_list}
     
     # 2. EXTRACT BASKETS (Transactions)
     baskets = []
     for order in orders:
-        if order.get("status") != "cancelled":
-            # Get unique items in this cart
-            items = list(set([item["product_id"] for item in order.get("items", [])]))
-            if len(items) > 1: # We only care about carts with multiple items
+        if order.status != "cancelled":
+            # order.items is a JSONB array from the DB
+            items = list(set([item["product_id"] for item in order.items]))
+            if len(items) > 1:
                 baskets.append(items)
                 
     total_baskets = len(baskets)

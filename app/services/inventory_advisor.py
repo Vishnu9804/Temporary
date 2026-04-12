@@ -5,6 +5,8 @@ import pandas as pd
 from datetime import datetime, timedelta
 import google.generativeai as genai
 from app.core.config import settings
+from sqlalchemy.orm import Session
+from app.models.schemas import Product, Order, Restock
 
 # Initialize Gemini
 genai.configure(api_key=settings.API_KEY)
@@ -25,27 +27,26 @@ def is_date_in_range(target_date: datetime, start_md: str, end_md: str) -> bool:
         # Wraps around the year
         return target_md >= start_md or target_md <= end_md
 
-async def inventory_engine(client_data: dict):
+async def inventory_engine(client_id: str, db: Session):
     # ==========================================
-    # STAGE 1: FETCH ADAPTER DATA
+    # STAGE 1: FETCH ADAPTER DATA FROM POSTGRES
     # ==========================================
-    try:
-        products = requests.get(client_data["products_api"]).json()
-        orders = requests.get(client_data["orders_api"]).json()
-        restocks = requests.get(client_data["restocks_api"]).json()
-        
-        # We try to fetch the store info (Region & Vertical) from the adapter.
-        # If the adapter doesn't have this endpoint yet, we fallback safely to US/Cosmetics.
-        store_info = {"region": "US", "vertical": "Cosmetics"}
-        if "store_info_api" in client_data:
-            try:
-                store_info = requests.get(client_data["store_info_api"]).json()
-            except:
-                pass
-    except Exception as e:
-        return {"error": f"Failed to fetch data from client APIs: {str(e)}"}
+    products_db = db.query(Product).filter(Product.client_id == client_id).all()
+    orders_db = db.query(Order).filter(Order.client_id == client_id).all()
+    restocks_db = db.query(Restock).filter(Restock.client_id == client_id).all()
 
-    region = store_info.get("region", "US")
+    # Convert DB objects to lists of dicts so your Pandas logic doesn't break
+    products = [{"id": p.id, "stock": p.stock, "core_matrix_tags": p.core_matrix_tags, "name": p.name} for p in products_db]
+    
+    # Since store_info is not in schema yet, fallback to US/Cosmetics for now
+    region = "US"
+    store_info = {"vertical": "Cosmetics"}
+
+    # ... STAGE 2 TO 6 REMAIN EXACTLY THE SAME ...
+    # (Just make sure you use dot notation like `order.status` or convert `orders_db` to dicts too)
+    # Example conversion for orders to keep your current logic perfectly intact:
+    orders = [{"status": o.status, "created_at": o.created_at.isoformat(), "items": o.items} for o in orders_db]
+    restocks = [{"product_id": r.product_id, "delivery_date": r.delivery_date.isoformat() if r.delivery_date else None, "order_date": r.order_date.isoformat(), "quantity_ordered": r.quantity_ordered} for r in restocks_db]
 
     # ==========================================
     # STAGE 2: LOAD GLOBAL MATRIX

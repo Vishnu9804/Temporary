@@ -1,18 +1,20 @@
-import json
-import os
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 from app.core.config import settings
 
-# A simple helper to load data
-def load_json_db():
-    if not os.path.exists(settings.JSON_DB_PATH):
-        return {}
-    
-    with open(settings.JSON_DB_PATH, "r") as f:
-        data = json.load(f)
-    return data
+# Create the SQLAlchemy Engine
+engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
 
-# We don't need a "session" like SQL, but let's keep the name similar
-# so your routers don't need to change much later.
+# Create a SessionLocal class
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Base class for the ORM models
+Base = declarative_base()
+
+# Dependency to get the DB session in your routers
 def get_db():
-    # In JSON world, "getting the DB" just means loading the dictionary
-    return load_json_db()
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
