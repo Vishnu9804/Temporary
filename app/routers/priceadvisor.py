@@ -18,11 +18,18 @@ class ProcessingMeta(BaseModel):
 class AdvisedChange(BaseModel):
     product_id: str
     product_name: str
+    stock_level: int
+    cost_price: float
     current_price: float
     advised_price: float
-    buffer_applied_percentage: float
+    old_profit_dollars: float
+    old_margin_percent: float
+    new_profit_dollars: float
+    new_margin_percent: float
+    profit_difference_dollars: float
+    margin_difference_percent: float
     reason_code: str
-    ai_advice: str
+    simple_advice: str
 
 class PriceAdvisorResponse(BaseModel):
     tenant_id: str
