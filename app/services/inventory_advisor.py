@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import google.generativeai as genai
 from app.core.config import settings
 from sqlalchemy.orm import Session
-from app.models.schemas import Product, Order, Restock
+from app.models.schemas import Product, Order, Restock, ClientAuth
 
 # Initialize Gemini
 genai.configure(api_key=settings.API_KEY)
@@ -38,9 +38,12 @@ async def inventory_engine(client_id: str, db: Session):
     # Convert DB objects to lists of dicts so your Pandas logic doesn't break
     products = [{"id": p.id, "stock": p.stock, "core_matrix_tags": p.core_matrix_tags, "name": p.name} for p in products_db]
     
-    # Since store_info is not in schema yet, fallback to US/Cosmetics for now
-    region = "US"
-    store_info = {"vertical": "Cosmetics"}
+    # Fetch Client Intelligence (Region & Vertical) dynamically from DB
+    client_info = db.query(ClientAuth).filter(ClientAuth.client_id == client_id).first()
+    
+    region = client_info.region if client_info and client_info.region else "US"
+    vertical = client_info.vertical if client_info and client_info.vertical else "Cosmetics"
+    store_info = {"vertical": vertical}
 
     # ... STAGE 2 TO 6 REMAIN EXACTLY THE SAME ...
     # (Just make sure you use dot notation like `order.status` or convert `orders_db` to dicts too)

@@ -9,6 +9,11 @@ class ClientAuth(Base):
     client_id = Column(String, primary_key=True, index=True)
     password = Column(String, nullable=False)
     services = Column(JSONB, nullable=False) # e.g. ["chat", "inventory"]
+    
+    # NEW COLUMNS ADDED
+    name = Column(String, nullable=True)
+    region = Column(String, default="US")
+    vertical = Column(String, default="Cosmetics")
 
 class Customer(Base):
     __tablename__ = "customers"
