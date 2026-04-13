@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from app.core.security import verify_client # Your Auth function
+from sqlalchemy.orm import Session
+from app.core.security import verify_client
 from app.services.chat_engine import generate_response
 from app.core.database import get_db
 
 router = APIRouter()
 
-# Define what the client MUST send you
 class ChatRequest(BaseModel):
     client_id: str
     client_pass: str
@@ -14,14 +14,16 @@ class ChatRequest(BaseModel):
     customer_msg: str
 
 @router.post("/ask")
-async def ask_chatbot(request: ChatRequest, db: dict = Depends(get_db)):
-    # 1. Security Check (This queries your DB)
-    is_valid = verify_client(request.client_id, request.client_pass, "chat", db)
-    # if not is_valid:
-    #     raise HTTPException(status_code=401, detail="Invalid Credentials")
+async def ask_chatbot(request: ChatRequest, db: Session = Depends(get_db)):
+    # 1. Security Check
+    verify_client(request.client_id, request.client_pass, "chat", db)
 
-    # 2. Call the Service Logic
-    # We pass the client_id so the service knows WHICH client's data to look up
-    bot_answer = await generate_response(request.client_id, request.customer_msg, request.customer_id)
+    # 2. Call the Service Logic (Now passing the db session)
+    bot_answer = await generate_response(
+        request.client_id, 
+        request.customer_msg, 
+        request.customer_id, 
+        db
+    )
     
     return bot_answer
