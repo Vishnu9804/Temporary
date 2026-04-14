@@ -85,3 +85,10 @@ class Restock(Base):
     total_cost = Column(Numeric)
     order_date = Column(DateTime)
     delivery_date = Column(DateTime, nullable=True)
+
+class ProductAssociation(Base):
+    __tablename__ = "product_associations"
+    client_id = Column(String, primary_key=True, index=True)
+    anchor_product_id = Column(String, primary_key=True, index=True)
+    associations = Column(JSONB, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
