@@ -1,24 +1,24 @@
-from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Integer, text
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Integer
+from sqlalchemy.dialects.postgresql import JSONB, UUID # <-- Add UUID here
 from app.core.database import Base
 from datetime import datetime
+import uuid # <-- Add this
 
-# 0. Client Table for Security/Auth
+# 0. Client Table
 class ClientAuth(Base):
     __tablename__ = "clients"
-    client_id = Column(String, primary_key=True, index=True)
+    # Use UUID and set default to auto-generate
+    client_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     password = Column(String, nullable=False)
-    services = Column(JSONB, nullable=False) # e.g. ["chat", "inventory"]
-    
-    # NEW COLUMNS ADDED
+    services = Column(JSONB, nullable=False) 
     name = Column(String, nullable=True)
     region = Column(String, default="US")
     vertical = Column(String, default="Cosmetics")
 
 class Customer(Base):
     __tablename__ = "customers"
-    client_id = Column(String, primary_key=True, index=True)
-    id = Column(String, primary_key=True, index=True)
+    client_id = Column(UUID(as_uuid=True), primary_key=True) # <-- Update to UUID
+    id = Column(String, primary_key=True)
     name = Column(String)
     email = Column(String)
     phone = Column(String, nullable=True)
@@ -29,8 +29,8 @@ class Customer(Base):
 
 class Product(Base):
     __tablename__ = "products"
-    client_id = Column(String, primary_key=True, index=True)
-    id = Column(String, primary_key=True, index=True)
+    client_id = Column(UUID(as_uuid=True), primary_key=True) # <-- Update to UUID
+    id = Column(String, primary_key=True)
     name = Column(String)
     category = Column(String)
     price = Column(Numeric)
@@ -49,9 +49,9 @@ class Product(Base):
 
 class Order(Base):
     __tablename__ = "orders"
-    client_id = Column(String, primary_key=True, index=True)
-    id = Column(String, primary_key=True, index=True)
-    customer_id = Column(String, index=True)
+    client_id = Column(UUID(as_uuid=True), primary_key=True) # <-- Update to UUID
+    id = Column(String, primary_key=True)
+    customer_id = Column(String) # Removed index=True, handled by DB GIN/B-Tree directly now
     status = Column(String)
     return_status = Column(String, default="none")
     tracking_number = Column(String, nullable=True)
@@ -64,8 +64,8 @@ class Order(Base):
 
 class ReturnRMA(Base):
     __tablename__ = "returns"
-    client_id = Column(String, primary_key=True, index=True)
-    id = Column(String, primary_key=True, index=True)
+    client_id = Column(UUID(as_uuid=True), primary_key=True) # <-- Update to UUID
+    id = Column(String, primary_key=True)
     order_id = Column(String)
     customer_id = Column(String)
     status = Column(String)
@@ -76,8 +76,8 @@ class ReturnRMA(Base):
 
 class Restock(Base):
     __tablename__ = "restocks"
-    client_id = Column(String, primary_key=True, index=True)
-    purchase_id = Column(String, primary_key=True, index=True)
+    client_id = Column(UUID(as_uuid=True), primary_key=True) # <-- Update to UUID
+    purchase_id = Column(String, primary_key=True)
     product_id = Column(String)
     supplier = Column(String)
     quantity_ordered = Column(Integer)
@@ -88,7 +88,7 @@ class Restock(Base):
 
 class ProductAssociation(Base):
     __tablename__ = "product_associations"
-    client_id = Column(String, primary_key=True, index=True)
-    anchor_product_id = Column(String, primary_key=True, index=True)
+    client_id = Column(UUID(as_uuid=True), primary_key=True) # <-- Update to UUID
+    anchor_product_id = Column(String, primary_key=True)
     associations = Column(JSONB, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
