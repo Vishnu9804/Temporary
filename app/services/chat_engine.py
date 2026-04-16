@@ -1,40 +1,65 @@
+import os
+
 import google.generativeai as genai
 import json
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
-from app.models.schemas import Product, Order, Customer, ReturnRMA
+from sqlalchemy import String, or_, cast
+from app.models.schemas import Product, Order, Customer, ReturnRMA, ClientAuth
 from app.core.config import settings
 
 # Setup the API
 genai.configure(api_key=settings.API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
+tax_path = os.path.join(os.path.dirname(__file__), '..', 'utils', 'universal_taxonomy.json')
+try:
+    with open(tax_path, 'r') as f:
+        UNIVERSAL_TAXONOMY = json.load(f)
+except FileNotFoundError:
+    UNIVERSAL_TAXONOMY = {}
+
 async def generate_response(client_id: str, msg: str, customer_id: str, db: Session):
     
+    # Fetch Client Vertical to give the LLM the correct dictionary
+    client_info = db.query(ClientAuth).filter(ClientAuth.client_id == client_id).first()
+    vertical = client_info.vertical if client_info and client_info.vertical else "Cosmetics"
+    
+    # Get the specific dictionary for this client's industry
+    client_dictionary = UNIVERSAL_TAXONOMY.get(vertical, {})
+
+    customer_db = db.query(Customer).filter(Customer.client_id == client_id, Customer.id == customer_id).first()
+    customer_context = {}
+    if customer_db:
+        customer_context = {
+            "name": customer_db.name,
+            "loyalty_tier": customer_db.loyalty_tier,
+            "beauty_profile": customer_db.beauty_profile,
+            "age": "info not available"  # Age is not stored, but LLM can infer from beauty profile if needed
+        }
+    customer_context_str = json.dumps(customer_context) if customer_context else "No specific customer profile available."
+    
     # ==========================================
-    # STAGE 1: INTENT CLASSIFICATION
+    # STAGE 1: INTENT & SYNCHRONIZED TAG EXTRACTION
     # ==========================================
     classification_prompt = f"""
-    You are an intent classification and intelligent search query generator for an e-commerce platform.
+    You are an intent classification and search query generator for a B2B SaaS platform serving a {vertical} business.
     Analyze the user's message and output a single line.
     
+    Customer Profile Context: {customer_context_str}
+    (Rule: Use this profile to guide search tags IF the user asks for generic recommendations. Do NOT restrict search tags to this profile if the user explicitly asks for something outside of their profile.)
+
     Format:
-    <IntentCategory> <Comma-separated list of highly relevant search keywords>
+    <IntentCategory> <Comma-separated keywords>
 
-    Categories:
-    - OrderTracking
-    - ProductSearch
-    - Discount
-    - ReturnStatus
-    - CustomerInfo
-    - Unknown
+    Categories: OrderTracking, ProductSearch, Discount, ReturnStatus, CustomerInfo, Unknown
 
-    Rules for Keywords:
-    - If the category is ProductSearch or Discount, generate a comma-separated list of concise search terms.
-    - Include the direct keywords from the user's message.
-    - ALSO include 2-3 highly related, contextual keywords that would help find the right product.
-    - Do NOT write full sentences for the keywords. Only use powerful search phrases.
-    - If the category does not require a product search, leave the keyword section blank.
+    CRITICAL RULES FOR KEYWORDS (THE SYNC MECHANISM):
+    If the intent is ProductSearch or Discount, you MUST translate the user's natural language into the exact tags used in our database. 
+    Here is the exact dictionary of allowed tags for this business:
+    {json.dumps(client_dictionary)}
+
+    Do NOT invent words. If the user says "I need something that dries fast", look at the dictionary and map it to "fast-absorbing".
+    Only output tags from the dictionary provided, plus the literal product name if they mentioned one.
 
     User Message: "{msg}"
     """
@@ -56,7 +81,7 @@ async def generate_response(client_id: str, msg: str, customer_id: str, db: Sess
         
         all_found_products = []
         
-        # Hit the PostgreSQL Database for EVERY keyword
+        # Hit Postgres. We must use cast(..., String) to search inside JSONB arrays with ilike
         for term in search_terms:
             search_pattern = f"%{term}%"
             products_db = db.query(Product).filter(
@@ -64,7 +89,10 @@ async def generate_response(client_id: str, msg: str, customer_id: str, db: Sess
                 or_(
                     Product.name.ilike(search_pattern),
                     Product.category.ilike(search_pattern),
-                    Product.description.ilike(search_pattern)
+                    Product.description.ilike(search_pattern),
+                    cast(Product.core_matrix_tags, String).ilike(search_pattern),
+                    cast(Product.key_ingredients, String).ilike(search_pattern),
+                    cast(Product.tags, String).ilike(search_pattern)
                 )
             ).all()
             
@@ -79,12 +107,12 @@ async def generate_response(client_id: str, msg: str, customer_id: str, db: Sess
 
         if not all_found_products:
             return {
-                "response": f"No products found for: {original_string}.",
+                "response": f"No products found matching: {original_string}.",
                 "response_type": "product_id",
                 "product_id": []
             }
             
-        # Deduplication and Frequency Sorting
+        # Deduplication and Frequency Sorting (Items that matched multiple tags float to the top)
         product_counts = {}
         product_map = {}
         for product in all_found_products:
@@ -96,7 +124,8 @@ async def generate_response(client_id: str, msg: str, customer_id: str, db: Sess
                 product_map[pid] = product
                 
         sorted_pids = sorted(product_counts.keys(), key=lambda k: product_counts[k], reverse=True)
-        resp = [product_map[pid] for pid in sorted_pids]
+        # Limit to top 5 best matches to avoid context overload
+        resp = [product_map[pid] for pid in sorted_pids[:5]]
         
         if inquiry_type == "ProductSearch":
             extra_prompt_rules = "- Describe the products found clearly, including names and prices."

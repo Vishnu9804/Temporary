@@ -1,7 +1,8 @@
 import httpx
 from typing import Dict, Any
 from sqlalchemy.orm import Session
-from app.models.schemas import Product
+from app.models.schemas import Product, Order
+from datetime import datetime, timedelta
 
 async def price_advisor_engine(client_id: str, db: Session):
     # Fetch Data Direct from DB
@@ -9,6 +10,27 @@ async def price_advisor_engine(client_id: str, db: Session):
     
     if not products_db:
         raise ValueError("No products found for this tenant.")
+
+    # ==========================================
+    # OPTION B: BULK FETCH SALES VELOCITY
+    # ==========================================
+    # We fetch all orders from the last 30 days in ONE query to save DB read costs
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    recent_orders = db.query(Order).filter(
+        Order.client_id == client_id,
+        Order.created_at >= thirty_days_ago,
+        Order.status != "cancelled"
+    ).all()
+
+    # Build an in-memory dictionary: { "PROD-123": 45, "PROD-456": 12 }
+    sales_30d_map = {}
+    for order in recent_orders:
+        for item in order.items:
+            pid = item.get("product_id")
+            qty = item.get("quantity", 0)
+            if pid:
+                sales_30d_map[pid] = sales_30d_map.get(pid, 0) + qty
+    # ==========================================
 
     advised_changes = []
 
@@ -27,17 +49,14 @@ async def price_advisor_engine(client_id: str, db: Session):
         buffer_percentage = 10.0 if is_premium else 5.0
         
         # 2. Advanced Supply Chain Metrics (Days of Inventory)
-        sales_30d = p.get("sales_velocity_30d")
-        try:
-            sales_30d = float(sales_30d) if sales_30d is not None else None
-        except (ValueError, TypeError):
-            sales_30d = None
+        # Pull the sales volume from our in-memory map instead of the product object
+        sales_30d = float(sales_30d_map.get(p_id, 0.0))
             
         is_scarcity = False
         is_overstock = False
         stock_context_str = f"{stock} items"
         
-        if sales_30d is not None and sales_30d > 0:
+        if sales_30d > 0:
             daily_velocity = sales_30d / 30.0
             days_of_inventory = stock / daily_velocity
             
@@ -58,7 +77,7 @@ async def price_advisor_engine(client_id: str, db: Session):
             is_overstock = stock > 20 # Even a small amount is dead-stock if sales are 0
             stock_context_str = f"{stock} items (and nobody has bought one recently)"
         else:
-            # Fallback if client adapter lacks velocity data
+            # Fallback if something goes wrong
             is_scarcity = stock < 50
             is_overstock = stock > 500
             stock_context_str = f"a huge pile of {stock} items" if is_overstock else (f"only {stock} items" if is_scarcity else f"{stock} items")

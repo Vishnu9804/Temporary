@@ -1,0 +1,106 @@
+{
+  "Cosmetics": {
+    "benefits": [
+      "deep hydration",
+      "acne clearing",
+      "anti-aging",
+      "pore minimizing",
+      "brightening",
+      "soothing redness"
+    ],
+    "properties": [
+      "fast-absorbing",
+      "non-comedogenic",
+      "waterproof",
+      "matte finish",
+      "dewy finish",
+      "fragrance-free",
+      "lightweight"
+    ],
+    "skin_types": [
+      "dry",
+      "oily",
+      "combination",
+      "sensitive",
+      "mature",
+      "acne-prone"
+    ],
+    "ingredients": [
+      "hyaluronic acid",
+      "salicylic acid",
+      "retinol",
+      "niacinamide",
+      "vitamin c",
+      "ceramides",
+      "glycerin"
+    ]
+  },
+  "Apparel": {
+    "benefits": [
+      "breathable",
+      "stain-resistant",
+      "wrinkle-free",
+      "stretchable",
+      "sweat-wicking",
+      "thermal insulated"
+    ],
+    "properties": [
+      "machine washable",
+      "dry-clean only",
+      "slim fit",
+      "relaxed fit",
+      "seamless",
+      "heavyweight",
+      "lightweight"
+    ],
+    "occasions": [
+      "casual wear",
+      "formal office",
+      "gym activewear",
+      "evening party",
+      "winter outdoor",
+      "beach summer"
+    ],
+    "materials": [
+      "100% cotton",
+      "merino wool",
+      "polyester blend",
+      "denim",
+      "silk",
+      "linen",
+      "spandex"
+    ]
+  },
+  "Electronics": {
+    "benefits": [
+      "noise cancelling",
+      "fast charging",
+      "ergonomic",
+      "high refresh rate",
+      "surround sound",
+      "long battery life"
+    ],
+    "properties": [
+      "wireless",
+      "water-resistant",
+      "bluetooth 5.0",
+      "usb-c",
+      "portable",
+      "heavy-duty"
+    ],
+    "use_cases": [
+      "hardcore gaming",
+      "office productivity",
+      "travel",
+      "home theater",
+      "outdoor sports"
+    ],
+    "components": [
+      "lithium-ion",
+      "oled screen",
+      "mechanical switches",
+      "ssd storage",
+      "led backlight"
+    ]
+  }
+}
